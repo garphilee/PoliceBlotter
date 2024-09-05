@@ -22,10 +22,8 @@ def initialGetIncidents():
     soup = BeautifulSoup(r,'html.parser')
     blotter = soup.find('div', {'id':'blotter'}).find('div',{'id':'blotlist'})
     incidents = blotter.find_all('a', {'id':'public-safety-blotter'})
-    #print(incidents)
 
-    blotDict = { # incidentNumber : (link, title)
-        
+    blotDict = { # incidentNumber : (link, title)        
     }
 
     for incident in incidents:
