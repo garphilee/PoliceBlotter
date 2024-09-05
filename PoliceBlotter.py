@@ -68,12 +68,30 @@ def initialGetIncidents():
 
         locationPatterns = [
         r'\b[A-Z][a-z]+\s+St\.?\s+at\s+[A-Z][a-z]+\s+Ave\.?\b',   # Intersection pattern
-        r'\b\d{1,5}\s+block\s+of\s+[A-Z][a-z]+(?:\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?|of\s+the\s+[A-Z][a-z]+))?\b'
-        # Block number pattern
-        #'I-376 West',
-        #'I-376 East',
 
-        #r'\b(?:Zone\s+\d|East\s+Hills|Homewood|[A-Z][a-z]+\s+[A-Z][a-z]+)\b'  # Named areas or zones
+        r'\b\d{1,5}\s+block\s+of\s+[A-Z][a-z]+(?:\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?|of\s+the\s+[A-Z][a-z]+))?\b',
+
+         # Intersection pattern: Match two street names with 'at' or 'and' between them, ensuring no extra text after the second street
+        r'\b[A-Z][a-z]+\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?)\s+(?:at|and)\s+[A-Z][a-z]+\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?)(?=\b|[^\w])',
+    
+
+        # Block of X Street pattern
+        r'\b\d{1,5}\s+block\s+of\s+[A-Z][a-z]+(?:\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?|of\s+the\s+[A-Z][a-z]+))?\b',
+
+        # Additional pattern: Capture single street names or location formats like "Zone 5"
+        r'\bZone\s+\d{1,2}\b',
+        
+        # Pattern to capture single street names like "East Carson Street"
+        r'\b[A-Z][a-z]+\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?)\b',
+         # Intersection pattern: 'Street at Street' or 'Street and Street'
+        r'\b[A-Z][a-z]+\s+(?:St\.?|Street|Ave\.?|Avenue|Blvd\.?|Boulevard|Rd\.?|Road|Dr\.?|Drive|Ln\.?|Lane|Ct\.?|Court|Ter\.?|Terrace|Pl\.?|Place)\s+(?:at|and)\s+[A-Z][a-z]+\s+(?:St\.?|Street|Ave\.?|Avenue|Blvd\.?|Boulevard|Rd\.?|Road|Dr\.?|Drive|Ln\.?|Lane|Ct\.?|Court|Ter\.?|Terrace|Pl\.?|Place)\b',
+
+        # Block pattern: 'X block of Y Street' (e.g., '200 block of East Ohio Street')
+        r'\b\d{1,5}\s+block\s+of\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:St\.?|Street|Ave\.?|Avenue|Blvd\.?|Boulevard|Rd\.?|Road|Dr\.?|Drive|Ln\.?|Lane|Ct\.?|Court|Ter\.?|Terrace|Pl\.?|Place)\b',
+
+        # Single street name pattern: Match single street names (e.g., 'Marshall Avenue')
+        r'\b[A-Z][a-z]+\s+(?:St\.?|Street|Ave\.?|Avenue|Blvd\.?|Boulevard|Rd\.?|Road|Dr\.?|Drive|Ln\.?|Lane|Ct\.?|Court|Ter\.?|Terrace|Pl\.?|Place)\b'
+
         ]
 
         # sample report to test re.pattern matching
@@ -101,7 +119,7 @@ def initialGetIncidents():
         return locations
 
 
-    for i, j in df[:20].iterrows():
+    for i, j in df[:25].iterrows():
         link = j[0]
         date, incidentType, locationZone = getIncidentDetails(link)
 
@@ -129,7 +147,7 @@ def initialGetIncidents():
 
 if __name__ == '__main__':
     s = requests.Session()
-    sleepTime = 2
+    sleepTime = 1
     dirPath = os.path.dirname(os.path.join(os.path.dirname(__file__),'PoliceBlotter.csv'))
     initialGetIncidents()
     
