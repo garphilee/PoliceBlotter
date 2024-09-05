@@ -15,7 +15,7 @@ import os
 '''
 #--------------------------
 
-def getAllIncidents():
+def initialGetIncidents():
     mainURL = 'https://pittsburghpa.gov/publicsafety/blotterview.html'
 
     r = s.get(mainURL, verify=False).text
@@ -24,7 +24,7 @@ def getAllIncidents():
     incidents = blotter.find_all('a', {'id':'public-safety-blotter'})
     #print(incidents)
 
-    blotDict = {
+    blotDict = { # incidentNumber : (link, title)
         
     }
 
@@ -97,6 +97,6 @@ if __name__ == '__main__':
     s = requests.Session()
     dirPath = os.path.dirname(os.path.join(os.path.dirname(__file__),'PoliceBlotter.csv'))
     print(dirPath)
-    getAllIncidents()
+    initialGetIncidents()
     
     
