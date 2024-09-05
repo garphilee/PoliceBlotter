@@ -30,20 +30,43 @@ def initialGetIncidents():
         blotTitle = incident.find('span').text.strip()
         blotNum = incident['href'].split('/')[-1].strip()
         blotLink = incident['href'].strip()
-        blotDict[blotNum] = (blotLink, blotTitle)
+        blotDict[blotNum] = [blotLink, blotTitle]
 
     # Incident Report Template Details (Date, Incident Type, Zone, etc)
     # Date:\s+([A-Z][a-z]+ \d{1,2}, \d{4})
     # Incident\s+Type:\s+([A-Za-z\s]+)
     # Location:\s*(.*?)\s*Summary:
 
-
-
     df = pd.DataFrame.from_dict(blotDict,orient='index', columns = ['link','title'])
 
-    print(df.loc['11']['link']) # test
+    df['date'] = ''
+    df['incidentType'] = ''
+    df['locationZone'] = ''
+    df['locationApproxAddress'] = ''
 
-    locationPatterns = [
+    def getIncidentDetails(link):
+        resp = s.get(link).text
+        soup = BeautifulSoup(resp, 'html.parser')
+        strongTags = soup.find('span', {'class':'labels'}).find_all('strong')[:3]
+        
+        date = strongTags[0].next_sibling
+        incidentType = strongTags[1].next_sibling
+        locationZone = strongTags[2].next_sibling
+
+        return date, incidentType, locationZone
+
+        '''for strong in strongTags:
+            label = strong.get_text(strip=True)
+            print(label)
+            headerDetails = strong.next_sibling
+            print(headerDetails)'''
+        
+    def getLocationApproxAddress(link):
+        resp = s.get(link).text
+        soup = BeautifulSoup(resp,'html.parser')
+        summary = soup.find('span',{'class':'labels'}).find('p').text
+
+        locationPatterns = [
         r'\b[A-Z][a-z]+\s+St\.?\s+at\s+[A-Z][a-z]+\s+Ave\.?\b',   # Intersection pattern
         r'\b\d{1,5}\s+block\s+of\s+[A-Z][a-z]+(?:\s+(?:Street|St\.?|Avenue|Ave\.?|Boulevard|Blvd\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Court|Ct\.?|Terrace|Ter\.?|Place|Pl\.?|of\s+the\s+[A-Z][a-z]+))?\b'
         # Block number pattern
@@ -51,32 +74,45 @@ def initialGetIncidents():
         #'I-376 East',
 
         #r'\b(?:Zone\s+\d|East\s+Hills|Homewood|[A-Z][a-z]+\s+[A-Z][a-z]+)\b'  # Named areas or zones
-    ]
+        ]
 
-    sampleReport = '''
-    Pittsburgh Police from Zone 6 were dispatched just after 10:00 p.m. to the 600 block of Sherwood Avenue in Sheraden for three ShotSpotter alerts totaling seventeen rounds.
+        # sample report to test re.pattern matching
+        sampleReport = '''
+        Pittsburgh Police from Zone 6 were dispatched just after 10:00 p.m. to the 600 block of Sherwood Avenue in Sheraden for three ShotSpotter alerts totaling seventeen rounds.
 
-    Arriving officers located an adult male victim lying in the grass with gunshot wounds to his chest and leg.
+        Arriving officers located an adult male victim lying in the grass with gunshot wounds to his chest and leg.
 
-    Pittsburgh EMS provided treatment to the victim on scene and transported him in grave condition to a local hospital. He was pronounced deceased at the hospital a short time later.
+        Pittsburgh EMS provided treatment to the victim on scene and transported him in grave condition to a local hospital. He was pronounced deceased at the hospital a short time later.
 
-    The Mobile Crime Unit was called to process all evidence at the scene, including recovered shell casings and video footage.
+        The Mobile Crime Unit was called to process all evidence at the scene, including recovered shell casings and video footage.
 
-    Violent Crime Unit detectives are investigating. The investigation is ongoing.
+        Violent Crime Unit detectives are investigating. The investigation is ongoing.
 
-    '''
+        '''
 
-    for pattern in locationPatterns:
-        match = re.search(pattern, sampleReport)
-        if match:
-            locations = match.group()
-            break
-        else:
-            None    
+        for pattern in locationPatterns:
+            match = re.search(pattern, summary)
+            if match:
+                locations = match.group()
+                break
+            else:
+                locations = 'Not Found'    
+        time.sleep(sleepTime)
+        return locations
 
-    print(locations)
+
+    for i, j in df[:20].iterrows():
+        link = j[0]
+        date, incidentType, locationZone = getIncidentDetails(link)
+
+        df.at[i, 'date'] = date
+        df.at[i, 'incidentType'] = incidentType
+        df.at[i, 'locationZone'] = locationZone
+        df.at[i, 'locationApproxAddress'] = getLocationApproxAddress(link)
+        time.sleep(sleepTime)
+
+    # save dataframe to csv
     csvOutput = os.path.join(os.path.dirname(__file__),'incidents.csv')
-    print('csvOutput:', csvOutput)
     df.to_csv(csvOutput)
 
 
@@ -93,8 +129,8 @@ def initialGetIncidents():
 
 if __name__ == '__main__':
     s = requests.Session()
+    sleepTime = 2
     dirPath = os.path.dirname(os.path.join(os.path.dirname(__file__),'PoliceBlotter.csv'))
-    print(dirPath)
     initialGetIncidents()
     
     
